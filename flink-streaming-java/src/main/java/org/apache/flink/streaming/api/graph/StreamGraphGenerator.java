@@ -156,6 +156,7 @@ public class StreamGraphGenerator {
 	 */
 	private Collection<Integer> transform(StreamTransformation<?> transform) {
 
+		//相同的算子只转换一次
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
@@ -173,30 +174,36 @@ public class StreamGraphGenerator {
 		}
 
 		// call at least once to trigger exceptions about MissingTypeInfo
+		//对每个算子的输出进行确认，如果输出有误，则抛出异常
 		transform.getOutputType();
 
+		/**
+		 * 定义了11类Trandfromation算子的解析规则
+		 * 这些规则之外的算子都非法
+		 * 如果需要自己扩展算子功能（自定义算子）可以在这里修改源码
+		 */
 		Collection<Integer> transformedIds;
-		if (transform instanceof OneInputTransformation<?, ?>) {
+		if (transform instanceof OneInputTransformation<?, ?>) {									//1
 			transformedIds = transformOneInputTransform((OneInputTransformation<?, ?>) transform);
-		} else if (transform instanceof TwoInputTransformation<?, ?, ?>) {
+		} else if (transform instanceof TwoInputTransformation<?, ?, ?>) {							//2
 			transformedIds = transformTwoInputTransform((TwoInputTransformation<?, ?, ?>) transform);
-		} else if (transform instanceof SourceTransformation<?>) {
+		} else if (transform instanceof SourceTransformation<?>) {									//3
 			transformedIds = transformSource((SourceTransformation<?>) transform);
-		} else if (transform instanceof SinkTransformation<?>) {
+		} else if (transform instanceof SinkTransformation<?>) {									//4
 			transformedIds = transformSink((SinkTransformation<?>) transform);
-		} else if (transform instanceof UnionTransformation<?>) {
+		} else if (transform instanceof UnionTransformation<?>) {									//5
 			transformedIds = transformUnion((UnionTransformation<?>) transform);
-		} else if (transform instanceof SplitTransformation<?>) {
+		} else if (transform instanceof SplitTransformation<?>) {									//6
 			transformedIds = transformSplit((SplitTransformation<?>) transform);
-		} else if (transform instanceof SelectTransformation<?>) {
+		} else if (transform instanceof SelectTransformation<?>) {									//7
 			transformedIds = transformSelect((SelectTransformation<?>) transform);
-		} else if (transform instanceof FeedbackTransformation<?>) {
+		} else if (transform instanceof FeedbackTransformation<?>) {								//8
 			transformedIds = transformFeedback((FeedbackTransformation<?>) transform);
-		} else if (transform instanceof CoFeedbackTransformation<?>) {
+		} else if (transform instanceof CoFeedbackTransformation<?>) {								//9
 			transformedIds = transformCoFeedback((CoFeedbackTransformation<?>) transform);
-		} else if (transform instanceof PartitionTransformation<?>) {
+		} else if (transform instanceof PartitionTransformation<?>) {								//10
 			transformedIds = transformPartition((PartitionTransformation<?>) transform);
-		} else if (transform instanceof SideOutputTransformation<?>) {
+		} else if (transform instanceof SideOutputTransformation<?>) {								//11
 			transformedIds = transformSideOutput((SideOutputTransformation<?>) transform);
 		} else {
 			throw new IllegalStateException("Unknown transformation: " + transform);
