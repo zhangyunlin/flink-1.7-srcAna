@@ -35,9 +35,7 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 /**
  * A generator for events. The generator internally maintains a series of state
  * machines (addresses and current associated state) and returns transition events
- * from those state machines. Each time the next event is generators, this
- * generator picks a random state machine and creates a random transition on that
- * state machine.
+ * from those state machine
  *
  * <p>The generator randomly adds new state machines, and removes state machines as
  * soon as they reach the terminal state. This implementation maintains up to

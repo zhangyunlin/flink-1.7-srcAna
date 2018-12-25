@@ -78,7 +78,7 @@ public class StreamGraph extends StreamingPlan {
 
 	private static final Logger LOG = LoggerFactory.getLogger(StreamGraph.class);
 
-	private String jobName = StreamExecutionEnvironment.DEFAULT_JOB_NAME;
+	private String jobName = StreamExecutionEnvironment.DEFAULT_JOB_NAME;//"flink streaming job"
 
 	private final StreamExecutionEnvironment environment;
 	private final ExecutionConfig executionConfig;
@@ -659,7 +659,10 @@ public class StreamGraph extends StreamingPlan {
 	@Override
 	public JobGraph getJobGraph(@Nullable JobID jobID) {
 		// temporarily forbid checkpointing for iterative jobs
-		if (isIterative() && checkpointConfig.isCheckpointingEnabled() && !checkpointConfig.isForceCheckpointing()) {
+		if (isIterative()  								  //streamGraph是否可迭代
+			&& checkpointConfig.isCheckpointingEnabled()  //checkpoint生效
+			&& !checkpointConfig.isForceCheckpointing()   //强制保存checkpoint
+			) {
 			throw new UnsupportedOperationException(
 				"Checkpointing is currently not supported by default for iterative jobs, as we cannot guarantee exactly once semantics. "
 					+ "State checkpoints happen normally, but records in-transit during the snapshot will be lost upon failure. "

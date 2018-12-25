@@ -661,12 +661,13 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 
 		// we have to allow queued scheduling in Flip-6 mode because we need to request slots
 		// from the ResourceManager
-		jobGraph.setAllowQueuedScheduling(true);
+		jobGraph.setAllowQueuedScheduling(true);//in local mode, this already setted
 
 		final CompletableFuture<InetSocketAddress> blobServerAddressFuture = createBlobServerAddress(dispatcherGateway);
 
 		final CompletableFuture<Void> jarUploadFuture = uploadAndSetJobFiles(blobServerAddressFuture, jobGraph);
 
+		//jobGraph实际提交的位置，是submitJob(JobGraph jobGraph)的核心方法
 		final CompletableFuture<Acknowledge> acknowledgeCompletableFuture = jarUploadFuture.thenCompose(
 			(Void ack) -> dispatcherGateway.submitJob(jobGraph, rpcTimeout));
 

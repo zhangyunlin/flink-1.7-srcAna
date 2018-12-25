@@ -28,13 +28,22 @@ import org.apache.flink.streaming.api.watermark.Watermark;
 import java.io.Serializable;
 
 /**
+ * 所有作为Flink数据源的类都需要实现这个接口
+ * 数据源需要符合如下规则：
+ * 1）当run()方法调用的时候，数据源向flink框架发送数据。run()方法可以一直运行；
+ * 2）当cancel()方法调用的时候，能够退出run()方法循环发送数据的状态。
+ *
  * Base interface for all stream data sources in Flink. The contract of a stream source
  * is the following: When the source should start emitting elements, the {@link #run} method
  * is called with a {@link SourceContext} that can be used for emitting elements.
  * The run method can run for as long as necessary. The source must, however, react to an
  * invocation of {@link #cancel()} by breaking out of its main loop.
  *
- * <h3>CheckpointedFunction Sources</h3>
+ * <h3>CheckpointedFunction Sources</h3> 实现CheckpointedFunction接口
+ *
+ * 作为Flink数据源，可以同时实现SourceFunction接口和CheckpointedFunction接口
+ * 但是实现CheckpointedFunction接口需要保证checkpointing，更新内部状态和发送数据不同时进行。
+ * 可以通过使用提供的checkpointing lock来实现。
  *
  * <p>Sources that also implement the {@link org.apache.flink.streaming.api.checkpoint.CheckpointedFunction}
  * interface must ensure that state checkpointing, updating of internal state and emission of
@@ -54,6 +63,7 @@ import java.io.Serializable;
  *          while (isRunning && count < 1000) {
  *              // this synchronized block ensures that state checkpointing,
  *              // internal state updates and emission of elements are an atomic operation
+ *              //同步方法保证checkpointing，内部状态更新和发送数据操作的原子性
  *              synchronized (ctx.getCheckpointLock()) {
  *                  ctx.collect(count);
  *                  count++;
@@ -86,6 +96,11 @@ import java.io.Serializable;
  *
  *
  * <h3>Timestamps and watermarks:</h3>
+ *
+ * 数据源会给数据打时间戳病发送水印
+ * 然而，只有当运行环境设置TimeCharacteristic.EventTime时水印才有用，当为IngestionTime和ProcessingTime
+ * 时，水印会被自动忽略。
+ *
  * Sources may assign timestamps to elements and may manually emit watermarks.
  * However, these are only interpreted if the streaming program runs on
  * {@link TimeCharacteristic#EventTime}. On other time characteristics
@@ -93,9 +108,15 @@ import java.io.Serializable;
  * the watermarks from the source function are ignored.
  *
  * <h3>Gracefully Stopping Functions</h3>
+ *
+ * Flink的数据源还可以实现StoppableFunction接口
+ * stopped一个函数，相遇于canceling一个函数，是一种更优雅的方式退出，保持更新状态和发射元素。
+ *
  * Functions may additionally implement the {@link org.apache.flink.api.common.functions.StoppableFunction}
  * interface. "Stopping" a function, in contrast to "canceling" means a graceful exit that leaves the
  * state and the emitted elements in a consistent state.
+ *
+ * 当一个数据源stopped的时候，运行的线程没有中断，但退出run()方法的时间没有确定，病保存状态更新和数据发送的原子性
  *
  * <p>When a source is stopped, the executing thread is not interrupted, but expected to leave the
  * {@link #run(SourceContext)} method in reasonable time on its own, preserving the atomicity

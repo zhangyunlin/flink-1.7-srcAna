@@ -135,13 +135,20 @@ public class StreamingJobGraphGenerator {
 		jobGraph = new JobGraph(jobID, streamGraph.getJobName());
 	}
 
+	//由StreamGraph创建JobGraph
 	private JobGraph createJobGraph() {
 
 		// make sure that all vertices start immediately
+		/**
+		 * 调度模式有两种：
+		 * ScheduleMode.EAGER  立即启动所有任务
+		 * ScheduleMode.LAZY_FROM_SOURCES 当上游的数据准备完成之后，再启动任务
+		 */
 		jobGraph.setScheduleMode(ScheduleMode.EAGER);
 
 		// Generate deterministic hashes for the nodes in order to identify them across
-		// submission iff they didn't change.
+		// submission if they didn't change.
+		//为每个节点创建独立的hash值
 		Map<Integer, byte[]> hashes = defaultStreamGraphHasher.traverseStreamGraphAndGenerateHashes(streamGraph);
 
 		// Generate legacy version hashes for backwards compatibility
@@ -151,11 +158,14 @@ public class StreamingJobGraphGenerator {
 		}
 
 		Map<Integer, List<Tuple2<byte[], byte[]>>> chainedOperatorHashes = new HashMap<>();
-
+		/**
+		 * flink将task中的subtask chain在一起，放在同一个slot中执行，减少网络传输，提高执行效率
+		 */
 		setChaining(hashes, legacyHashes, chainedOperatorHashes);
 
 		setPhysicalEdges();
 
+		//设置那些任务分享同一个slot
 		setSlotSharingAndCoLocation();
 
 		configureCheckpointing();

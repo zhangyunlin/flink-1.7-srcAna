@@ -98,7 +98,8 @@ object TwitterExample {
       // selecting English tweets and splitting to (word, 1)
       .flatMap(new SelectEnglishAndTokenizeFlatMap)
       // group by words and sum their occurrences
-      .keyBy(0).sum(1)
+      .keyBy(0)
+      .sum(1)
 
     // emit result
     if (params.has("output")) {

@@ -62,6 +62,7 @@ object IncrementalLearningSkeleton {
 
     // set up the execution environment
     val env = StreamExecutionEnvironment.getExecutionEnvironment
+    //set up the event time type
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     // build new model on every second of new data
@@ -113,6 +114,7 @@ object IncrementalLearningSkeleton {
   /**
    * Feeds new training data for the partial model builder. By default it is
    * implemented as constantly emitting the Integer 1 in a loop.
+    * emit 1 repeatedly,why ???
    */
   private class FiniteTrainingDataSource extends SourceFunction[Int] {
     override def run(ctx: SourceContext[Int]) = (0 until 8200).foreach( _ => ctx.collect(1) )

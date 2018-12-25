@@ -211,6 +211,8 @@ public class StreamGraphGenerator {
 
 		// need this check because the iterate transformation adds itself before
 		// transforming the feedback edges
+		//在迭代transformation算子之前，在转换反馈边之前transformation算子会先将自己添加到alreadyTransformed
+		//所以在这里需要进行检查
 		if (!alreadyTransformed.containsKey(transform)) {
 			alreadyTransformed.put(transform, transformedIds);
 		}
